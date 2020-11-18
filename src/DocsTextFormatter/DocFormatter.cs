@@ -12,9 +12,13 @@ namespace DocsTextFormatter
             var length = inputLength;
             byte outbyte = 0;
             byte prev = 0;
+            byte prevOut = 0;
 
             for (var i = 0; i < length; i++)
             {
+                prevOut = outbyte;
+                prev = (byte) (outbyte & 0x7F);
+
                 var write = true;
                 var b = reader.ReadByte();
 
@@ -32,11 +36,13 @@ namespace DocsTextFormatter
 
                 if (outbyte == 0x20)
                 {
-                    output.Position--;
-                    outbyte = (byte) (prev | 0x80);
+                    if (output.Position > 0 && prevOut < 0x80 && prev != 0x0D)
+                    {
+                        output.Position--;
+                        outbyte = (byte) (prev | 0x80);
+                    }
                 }
 
-                prev = (byte) (outbyte & 0x7F);
                 writer.Write(outbyte);
             }
 
