@@ -36,7 +36,7 @@ namespace DocsTextFormatter
             using (var input = new MemoryStream(inData))
             using (var output = new MemoryStream())
             {
-                Converter.Convert(input, (int) input.Length, output);
+                DocFormatter.Format(input, (int) input.Length, output);
                 output.Flush();
                 File.WriteAllBytes(outFile, output.ToArray());
                 Console.WriteLine($"Output size: {output.Length}");

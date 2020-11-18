@@ -2,9 +2,9 @@
 
 namespace DocsTextFormatter
 {
-    public static class Converter
+    public static class DocFormatter
     {
-        public static void Convert(Stream input, int inputLength, Stream output)
+        public static void Format(Stream input, int inputLength, Stream output)
         {
             var reader = new BinaryReader(input);
             var writer = new BinaryWriter(output);
