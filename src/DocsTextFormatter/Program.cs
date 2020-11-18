@@ -6,59 +6,41 @@ using System.Text;
 
 namespace DocsTextFormatter
 {
-    class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            if (Debugger.IsAttached)
+            if (args.Length < 1 || args.Length > 2)
             {
-                args = new string[] { @"C:\Users\Tony\Desktop\C64CART\combined\docs\docs.txt" };
+                Console.WriteLine("Usage: DocsTextFormatter <infile.txt> [<outfile.bin>]");
+                return;
             }
 
-            if (args.Length == 1)
+            var inFile = args[0];
+            if (!File.Exists(inFile))
             {
-                string outFile = Path.Combine(Path.GetDirectoryName(args[0]), Path.GetFileNameWithoutExtension(args[0]) + ".out");
-                byte[] inData = File.ReadAllBytes(args[0]);
-                using (MemoryStream input = new MemoryStream(inData), output = new MemoryStream())
-                {
-                    BinaryReader reader = new BinaryReader(input);
-                    BinaryWriter writer = new BinaryWriter(output);
+                Console.WriteLine($"File not found: {inFile}");
+                return;
+            }
 
-                    int length = inData.Length;
-                    byte outbyte = 0;
-                    byte prev = 0;
+            var outFile = args.Length > 1
+                ? args[1]
+                : Path.Combine(
+                    Path.GetDirectoryName(inFile),
+                    $"{Path.GetFileNameWithoutExtension(inFile)}.out");
 
-                    for (int i = 0; i < length; i++)
-                    {
-                        bool write = true;
-                        byte b = reader.ReadByte();
+            var inData = File.ReadAllBytes(inFile);
 
-                        if (b >= 0x20 && b < 0x40)
-                            outbyte = (byte)(b & 0x3F);
-                        else if (b > 0x60 && b <= 0x7A)
-                            outbyte = (byte)(b ^ 0x20);
-                        else if ((b >= 0x20 && b < 0x7F) || (b == 0x0D))
-                            outbyte = b;
-                        else
-                            write = false;
+            Console.WriteLine($"Input size: {inData.Length} bytes");
 
-                        if (write)
-                        {
-                            if (outbyte == 0x20)
-                            {
-                                output.Position--;
-                                outbyte = (byte)(prev | 0x80);
-                            }
-
-                            prev = (byte)(outbyte & 0x7F);
-                            writer.Write(outbyte);
-                        }
-                    }
-
-                    writer.Write((byte)0);
-                    writer.Flush();
-                    File.WriteAllBytes(outFile, output.ToArray());
-                }
+            using (var input = new MemoryStream(inData))
+            using (var output = new MemoryStream())
+            {
+                Converter.Convert(input, (int) input.Length, output);
+                output.Flush();
+                File.WriteAllBytes(outFile, output.ToArray());
+                Console.WriteLine($"Output size: {output.Length}");
+                Console.WriteLine($"Output file: {outFile}");
             }
         }
     }
